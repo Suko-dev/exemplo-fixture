@@ -1,17 +1,17 @@
 import { ClienteService } from "./cliente-service";
+import { validate, version } from 'uuid'
 
 describe('ClienteService', () => {
+    let clienteService: ClienteService
+    let salvarCliente
+
+    beforeEach(() => {
+        salvarCliente = jest.fn()
+        const clienteRepository = { salvar: salvarCliente }
+        clienteService = new ClienteService(clienteRepository)
+    })
 
     describe('Validacao do cliente', () => {
-        let clienteService: ClienteService
-        let salvarCliente
-
-        beforeAll(() => {
-            salvarCliente = jest.fn()
-            const clienteRepository = { salvar: salvarCliente }
-            clienteService = new ClienteService(clienteRepository)
-        })
-
         describe('Nome', () => {
             test('Deve lançar um erro quando o nome do cliente tem menos de 3 caracteres', () => {
                 const criarClienteDto = {
@@ -77,7 +77,6 @@ describe('ClienteService', () => {
                 expect(salvarCliente).toHaveBeenCalled()
             })
         })
-
 
         describe('Email', () => {
             test('Deve lançar um erro quando o email do cliente nao tem @', () => {
@@ -164,7 +163,72 @@ describe('ClienteService', () => {
                 expect(async () => await clienteService.criarCliente(criarClienteDto)).rejects.toThrow(new Error('Você deve possuir menos de 110 anos para se cadastrar'))
             })
 
-            
+
+            test('Deve salvar o cliente quando possuir 18 anos', async () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: 18,
+                    email: 'teste@email.com'
+                }
+                await clienteService.criarCliente(criarClienteDto)
+
+                expect(salvarCliente).toHaveBeenCalled()
+            })
+
+            test('Deve salvar o cliente quando possuir 110 anos', async () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: 110,
+                    email: 'teste@email.com'
+                }
+                await clienteService.criarCliente(criarClienteDto)
+
+                expect(salvarCliente).toHaveBeenCalled()
+            })
+        })
+
+        describe('Idade', () => {
+            test('Deve lançar um erro quando o cliente tem menos de 18 anos', () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: 17,
+                    email: 'teste@email.com'
+                }
+
+                expect(async () => await clienteService.criarCliente(criarClienteDto)).rejects.toThrow(new Error('Você deve possuir mais de 18 anos para se cadastrar'))
+            })
+
+            test('Deve lançar um erro quando o cliente possui uma idade que nao seja um numero inteiro', () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: 21.3,
+                    email: 'teste@email.com'
+                }
+
+                expect(async () => await clienteService.criarCliente(criarClienteDto)).rejects.toThrow(new Error('Valor informado para idade é inválido.'))
+            })
+
+            test('Deve lançar um erro quando o cliente possui uma idade negativa', () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: -1,
+                    email: 'teste@email.com'
+                }
+
+                expect(async () => await clienteService.criarCliente(criarClienteDto)).rejects.toThrow(new Error('Você deve possuir mais de 18 anos para se cadastrar'))
+            })
+
+            test('Deve lançar um erro quando o cliente possui mais de 110 anos', () => {
+                const criarClienteDto = {
+                    nome: 'Nome Valido',
+                    idade: 111,
+                    email: 'teste@email.com'
+                }
+
+                expect(async () => await clienteService.criarCliente(criarClienteDto)).rejects.toThrow(new Error('Você deve possuir menos de 110 anos para se cadastrar'))
+            })
+
+
             test('Deve salvar o cliente quando possuir 18 anos', async () => {
                 const criarClienteDto = {
                     nome: 'Nome Valido',
@@ -189,5 +253,19 @@ describe('ClienteService', () => {
         })
     })
 
+    describe('Criacao de id', () => {
+        test('Deve criar um id do tipo uuidV4 para o cliente', async () => {
+            const criarClienteDto = {
+                nome: 'NomeValido',
+                idade: 20,
+                email: 'emailValido@email.com'
+            }
+
+            const cliente = await clienteService.criarCliente(criarClienteDto)
+
+            expect(validate(cliente.id)).toBeTruthy()
+            expect(version(cliente.id)).toEqual(4)
+        })
+    })
 })
 

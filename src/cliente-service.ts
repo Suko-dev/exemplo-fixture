@@ -28,10 +28,12 @@ interface ClienteRepository {
 export class ClienteService {
     constructor(private clienteRepository: ClienteRepository) { }
 
-    async criarCliente(criarClienteDto: CriarClienteDto): Promise<void> {
+    async criarCliente(criarClienteDto: CriarClienteDto): Promise<Cliente> {
         this.validaParametros(criarClienteDto)
         const cliente = new Cliente(criarClienteDto)
         await this.clienteRepository.salvar(cliente)
+
+        return cliente
     }
 
     private validaParametros({ nome, email, idade }: CriarClienteDto): void {
