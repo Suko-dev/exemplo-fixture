@@ -1,9 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 
-type CriarClienteDto = {
+export type CriarClienteDto = {
     nome: string
     email: string
     idade: number
+    telefone: number
 }
 
 class Cliente {
@@ -11,18 +12,20 @@ class Cliente {
     nome: string
     email: string
     idade: number
+    telefone: number
 
 
-    constructor({ nome, email, idade }: CriarClienteDto, id?: string) {
+    constructor({ nome, email, idade, telefone }: CriarClienteDto, id?: string) {
         this.id = id ?? uuidv4()
         this.nome = nome
         this.email = email
         this.idade = idade
+        this.telefone = telefone!
     }
 }
 
 interface ClienteRepository {
-    salvar: (cliente: Cliente) => Promise<void>
+    salvar: (cliente: Cliente) => Promise<boolean>
 }
 
 export class ClienteService {
@@ -31,19 +34,24 @@ export class ClienteService {
     async criarCliente(criarClienteDto: CriarClienteDto): Promise<Cliente> {
         this.validaParametros(criarClienteDto)
         const cliente = new Cliente(criarClienteDto)
-        await this.clienteRepository.salvar(cliente)
+        const salvou = await this.clienteRepository.salvar(cliente)
+        if (!salvou) {
+            throw new Error('Não foi possível salvar no banco de dados')
+        }
 
         return cliente
     }
 
-    private validaParametros({ nome, email, idade }: CriarClienteDto): void {
+    private validaParametros({ nome, email, idade, telefone }: CriarClienteDto): void {
         this.validaEmail(email)
         this.validaIdade(idade)
         this.validaNome(nome)
+        this.validaTelefone(telefone)
     }
 
     private validaNome(nome: string): void {
         nome = nome.trim()
+
         if (nome.length < 3) {
             throw new Error('Nome deve possuir no mínimo 3 letras')
         }
@@ -56,7 +64,7 @@ export class ClienteService {
         email = email.trim()
         const testeEmailValido = new RegExp(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
         const ehValido = testeEmailValido.test(email)
-        console.log(email, ehValido)
+
         if (!ehValido) {
             throw new Error('Formato de email inválido')
 
@@ -76,6 +84,14 @@ export class ClienteService {
 
         if (idade > 110) {
             throw new Error('Você deve possuir menos de 110 anos para se cadastrar')
+        }
+    }
+
+    private validaTelefone(telefone: number): void {
+        const testeTelefoneEhValido = new RegExp(/(\d{2})(9\d{8})/)
+        const ehValido = testeTelefoneEhValido.test(telefone.toString())
+        if (!ehValido) {
+            throw new Error('Telefone inválido. O telefone precisa ser um celular com ddd. ex: 32988888888')
         }
     }
 }

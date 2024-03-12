@@ -10,6 +10,7 @@
   "license": "ISC",
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@types/chance": "^1.1.6",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.25",
     "@types/uuid": "^9.0.8",
@@ -19,6 +20,7 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
+    "chance": "^1.1.11",
     "uuid": "^9.0.1"
   }
 }
